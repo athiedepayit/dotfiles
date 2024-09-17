@@ -1,0 +1,45 @@
+import = [
+"~/.config/alacritty/dark.toml"
+]
+
+[window]
+#decorations = "none"
+padding = { x = 5, y = 5 }
+dynamic_padding = true
+
+[font]
+size = 14.0
+
+[font.bold]
+#family = "GohuFont 14 Nerd Font"
+family = "Hack Nerd Font"
+style = "Bold"
+[font.italic]
+#family = "GohuFont 14 Nerd Font"
+family = "Hack Nerd Font"
+style = "Italic"
+
+[font.normal]
+#family = "GohuFont 14 Nerd Font"
+family = "Hack Nerd Font"
+style = "Regular"
+
+[[keyboard.bindings]]
+action = "SpawnNewInstance"
+key = "N"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "Quit"
+key = "W"
+mods = "Control|Shift"
+
+# macOS only since only macOS gets tabs
+[[keyboard.bindings]]
+action = "SelectNextTab"
+key = "Tab"
+mods = "Control"
+[[keyboard.bindings]]
+action = "SelectPreviousTab"
+key = "Tab"
+mods = "Control|Shift"
