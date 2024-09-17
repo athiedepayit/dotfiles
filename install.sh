@@ -24,6 +24,11 @@ install_dots() {
 	cp settings.json "$HOME/Library/Application Support/Code/User/"
 }
 
+install_bin() {
+	mkdir -p "$HOME/.local/bin"
+	cp bin/* "$HOME/.local/bin/"
+}
+
 brew_packages() {
 	# brew install
 	# generated with brew list --installed-on-request
@@ -32,5 +37,5 @@ brew_packages() {
 	brew install --cask $(cat brew_casks)
 }
 
-#install_dots
+install_dots
 brew_packages
