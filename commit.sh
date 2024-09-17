@@ -7,4 +7,4 @@ cp "$HOME/.vimrc" vimrc
 cp "$HOME/.bashrc" bashrc
 cp "$HOME/Library/Application Support/Code/User/settings.json" .
 git add .
-git commit -m "update $(date +%Y%m%d %H:%M)"
+git commit -m "update $(date +%Y%m%d\ %H:%M)"
