@@ -1,4 +1,3 @@
-# generated with brew list --installed-on-request
 ansible
 ansible-lint
 awscli
