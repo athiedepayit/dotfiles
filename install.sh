@@ -19,3 +19,6 @@ cp vimrc "$HOME/.vimrc"
 # bashrc
 cp bashrc "$HOME/.bashrc"
 
+# vscode
+mkdir -p "$HOME/Library/Application Support/Code/User/"
+cp settings.json "$HOME/Library/Application Support/Code/User/"
