@@ -23,7 +23,8 @@ outer.right =      0
 
 [mode.main.binding]
 # See: https://nikitabobko.github.io/AeroSpace/goodness#open-a-new-window-with-applescript
-alt-enter = 'exec-and-forget ~/.local/bin/iterm-instance.sh'
+#alt-enter = 'exec-and-forget ~/.local/bin/iterm-instance.sh'
+alt-enter = 'exec-and-forget ~/.local/bin/alacritty.sh'
 
 alt-h = 'focus left'
 alt-j = 'focus down'
@@ -133,4 +134,11 @@ if.app-id = 'com.microsoft.rdc.macos'
 run = ['layout floating']
 [[on-window-detected]]
 if.app-id = 'com.apple.PhotoBooth'
+run = ['layout floating']
+[[on-window-detected]]
+if.app-id = 'com.yubico.ykman'
+run = ['layout floating']
+[[on-window-detected]]
+if.app-id = 'org.mozilla.thunderbird'
+if.window-title-regex-substring = '.* Reminder.'
 run = ['layout floating']
