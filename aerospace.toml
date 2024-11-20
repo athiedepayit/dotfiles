@@ -14,8 +14,8 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 start-at-login = true
 
 [gaps]
-inner.horizontal = 4
-inner.vertical =   4
+inner.horizontal = 6
+inner.vertical =   6
 outer.left =       0
 outer.bottom =     0
 outer.top =        0
@@ -23,8 +23,8 @@ outer.right =      0
 
 [mode.main.binding]
 # See: https://nikitabobko.github.io/AeroSpace/goodness#open-a-new-window-with-applescript
-#alt-enter = 'exec-and-forget ~/.local/bin/iterm-instance.sh'
-alt-enter = 'exec-and-forget ~/.local/bin/alacritty.sh'
+alt-enter = 'exec-and-forget ~/.local/bin/iterm-instance.sh'
+#alt-enter = 'exec-and-forget ~/.local/bin/alacritty.sh'
 
 alt-h = 'focus left'
 alt-j = 'focus down'
@@ -111,6 +111,9 @@ s = ['mode main', 'exec-and-forget pmset sleepnow']
 enter = 'mode main'
 esc = 'mode main'
 
+#############################
+### Floating Window Rules ###
+#############################
 [[on-window-detected]]
 if.app-id = 'com.apple.systempreferences'
 run = ['layout floating']
@@ -140,5 +143,9 @@ if.app-id = 'com.yubico.ykman'
 run = ['layout floating']
 [[on-window-detected]]
 if.app-id = 'org.mozilla.thunderbird'
-if.window-title-regex-substring = '.* Reminder.'
+if.window-title-regex-substring = 'Reminder'
+run = ['layout floating']
+[[on-window-detected]]
+if.app-id = 'org.mozilla.thunderbird'
+if.window-title-regex-substring = 'Invitation'
 run = ['layout floating']

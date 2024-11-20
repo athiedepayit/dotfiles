@@ -1,7 +1,12 @@
 {
     "workbench.startupEditor": "none",
-    "telemetry.telemetryLevel": "crash",
+    "telemetry.telemetryLevel": "off",
     "editor.cursorStyle": "block",
+    "vscode-neovim.compositeKeys": {
+        "jj": {
+            "command": "vscode-neovim.escape",
+        },
+    },
     "vim.easymotion": true,
     "vim.incsearch": true,
     "vim.useSystemClipboard": true,
@@ -21,12 +26,22 @@
     "vim.normalModeKeyBindingsNonRecursive": [
         {
             "before": [
-                "<leader>",
-                "d"
+                "b",
+                "n"
             ],
             "after": [
-                "d",
-                "d"
+                "g",
+                "t"
+            ]
+        },
+        {
+            "before": [
+                "b",
+                "N"
+            ],
+            "after": [
+                "g",
+                "T"
             ]
         },
         {
@@ -53,7 +68,8 @@
         "<C-f>": false
     },
     "extensions.experimental.affinity": {
-        "vscodevim.vim": 1
+        "vscodevim.vim": 1,
+        "asvetliakov.vscode-neovim": 1
     },
     "editor.cursorBlinking": "solid",
     "editor.minimap.renderCharacters": false,
@@ -62,5 +78,16 @@
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
-    "editor.fontSize": 13
+    "editor.fontSize": 13,
+    "security.workspace.trust.untrustedFiles": "open",
+    "editor.formatOnSave": true,
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "extensions.autoUpdate": false,
+    "update.mode": "none",
+    "extensions.autoCheckUpdates": false,
+    "update.showReleaseNotes": false,
+    "editor.minimap.enabled": false,
+    "terminal.integrated.fontSize": 13,
+    "workbench.activityBar.location": "top"
 }

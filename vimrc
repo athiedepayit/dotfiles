@@ -17,9 +17,8 @@ call plug#begin()
 Plug 'junegunn/goyo.vim'
 Plug 'preservim/nerdtree'
 Plug 'tpope/vim-fugitive'
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-Plug 'bling/vim-bufferline'
+Plug 'ap/vim-buftabline'
+Plug 'rafi/awesome-vim-colorschemes'
 Plug 'hashivim/vim-terraform'
 call plug#end()
 
@@ -32,10 +31,10 @@ nnoremap <F5> :so $MYVIMRC<cr>
 map <F6> :setlocal spell! spelllang=en_us<CR>
 "colors
 syntax enable
-"colorscheme quiet
 set background=dark
 set t_Co=256 "256 colors in terminal
 set cc=80
+colorscheme paramount
 hi Normal guibg=NONE
 hi Normal ctermbg=NONE
 
@@ -83,16 +82,18 @@ set hlsearch "highlight matches
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 
 "statusline
-let g:airline_theme='minimalist'
-let g:airline_extensions = ['bufferline']
-"let g:airline#extensions#tabline#enabled=1
-"let g:airline#extensions#whitespace#enabled=0
+"set laststatus=2
+"let g:bufferline_echo=0
+"let g:bufferline_active_buffer_left='*'
+"let g:bufferline_active_buffer_right=''
+"autocmd VimEnter * let &statusline='%{bufferline#refresh_status()}'.bufferline#get_status_string()
 
 "custom keymaps
 let mapleader=" "
 inoremap jj <esc>
 nnoremap bn :bnext<cr>
 nnoremap bN :bprevious<cr>
+nnoremap bx :bdelete<cr>
 nnoremap <F4> :! %<cr>
 inoremap <F2> <esc>:NERDTreeToggle<cr>
 nnoremap <F2> :NERDTreeToggle<cr>
@@ -109,36 +110,12 @@ nnoremap <leader>gf :edit %:h/<cfile><CR>
 nnoremap j gj
 nnoremap k gk
 
-"run file based on language
-autocmd FileType python map <buffer> <F4> :w<CR>:exec '!clear; python3' shellescape(@%, 1)<CR>
-autocmd FileType python imap <buffer> <F4> <esc>:w<CR>:exec '!clear;python3' shellescape(@%, 1)<CR>
-autocmd FileType shell map <buffer> <F4> :w<CR>:exec '!clear;bash' shellescape(@%, 1)<CR>
-autocmd FileType shell imap <buffer> <F4> <esc>:w<CR>:exec '!clear;bash' shellescape(@%, 1)<CR>
-autocmd FileType html map <buffer> <F4> :w<CR>:exec '!clear;firefox' shellescape(@%, 1)<CR>
-autocmd FileType html imap <buffer> <F4> <esc>:w<CR>:exec '!clear;firefox' shellescape(@%, 1)<CR>
-autocmd FileType rust map <buffer> <F4> :w<CR>:exec '!rs' shellescape(@%, 1)<CR>
-autocmd FileType rust imap <buffer> <F4> <esc>:w<CR>:exec '!rs' shellescape(@%, 1)<CR>
-autocmd FileType go map <buffer> <F4> :w<CR>:exec '!g' shellescape(@%, 1)<CR>
-autocmd FileType go imap <buffer> <F4> <esc>:w<CR>:exec '!g' shellescape(@%, 1)<CR>
-autocmd FileType c map <buffer> <F4> :w<CR>:exec '!c' shellescape(@%, 1)<CR>
-autocmd FileType c imap <buffer> <F4> <esc>:w<CR>:exec '!c' shellescape(@%, 1)<CR>
+let g:netrw_banner=0
+let g:netrw_browse_split=4
+let g:netrw_altv=1
+let g:netrw_liststyle=3
+let g:netrw_list_hide=netrw_gitignore#Hide()
+"let g:netrw_list_hide.=',\(^\|\s\s\)\zs\.\S\+'
+let g:netrw_list_hide.=',\(^\|\s\s\)\zs\+'
 
-"formatters
-augroup configgroup
-    autocmd!
-    autocmd VimEnter * highlight clear SignColumn
-    autocmd FileType vala setlocal syntax=vala
-    autocmd FileType yaml setlocal tabstop=2
-    autocmd FileType yaml setlocal expandtab
-    autocmd FileType yaml setlocal shiftwidth=2
-    autocmd FileType yaml setlocal softtabstop=2
-    autocmd FileType yaml setlocal expandtab
-    autocmd FileType ruby setlocal tabstop=2
-    autocmd FileType ruby setlocal shiftwidth=2
-    autocmd FileType ruby setlocal softtabstop=2
-    autocmd FileType ruby setlocal commentstring=#\ %s
-    autocmd FileType python setlocal commentstring=#\ %s
-    autocmd BufEnter *.cls setlocal filetype=java
-    autocmd BufEnter Makefile setlocal noexpandtab
-augroup END
-
+"command! MakeTags !ctags -R .

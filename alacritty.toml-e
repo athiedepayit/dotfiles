@@ -1,6 +1,6 @@
 [general]
 import = [
-"~/.config/alacritty/dark.toml"
+"~/.config/alacritty/light.toml"
 ]
 
 [window]

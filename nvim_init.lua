@@ -17,14 +17,17 @@ o.backspace = "2"
 --o.guicursor = "i:block"
 o.splitright = true
 o.splitbelow = true
---o.softtabstop = 4
---o.shiftwidth = 4
-o.colorcolumn = '80'
+o.softtabstop = 4
+o.shiftwidth = 4
 o.smartindent = true
 o.linebreak = true
-o.laststatus = 0
+--o.laststatus = 0
+--o.showtabline = 2
 o.updatetime = 250
 g.wrap = true
+o.foldmethod = "expr"
+o.foldexpr = "nvim_treesitter#foldexpr()"
+o.foldlevel = 99
 
 g.t_Co = 256
 g.mapleader = " "
@@ -41,7 +44,7 @@ kmap("n", "bx", ":bdelete<CR>")
 
 kmap("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
-kmap("n", "<F2>", ":NERDTreeToggle<CR>")
+kmap("n", "<F2>", ":NvimTreeToggle<CR>")
 kmap("n", "<F6>", ":setlocal spell! spelllang=en_us<CR>")
 kmap("n", "<F5>", ":so ~/.config/nvim/init.lua<CR>")
 kmap("n", "<Leader>r", ":so ~/.config/nvim/init.lua<CR>")
@@ -56,9 +59,6 @@ kmap("n", "<leader>gf", ":edit %:h/<cfile><CR>")
 kmap("n", "<leader>n", ":set nonumber<CR>")
 kmap("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
 kmap("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
--- insert date
-kmap("n", "<leader>dt", ':r! date "+\\%Y-\\%m-\\%d" <CR>')
-kmap("n", "<leader>tt", ':r! date "+\\%H:\\%M:\\%S" <CR>')
 
 -- remember last place
 local lastplace = vim.api.nvim_create_augroup("LastPlace", {})
@@ -66,8 +66,8 @@ vim.api.nvim_clear_autocmds({ group = lastplace })
 vim.api.nvim_create_autocmd("BufReadPost", {
 	group = lastplace,
 	pattern = { "*" },
-	desc = "remember last cursor place",
-	callback = function()
+	desc = "remember last cursor place", -- {{{
+	callback = function()             -- }}}
 		local mark = vim.api.nvim_buf_get_mark(0, '"')
 		local lcount = vim.api.nvim_buf_line_count(0)
 		if mark[1] > 0 and mark[1] <= lcount then
@@ -90,17 +90,14 @@ autocmd VimEnter * if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
 \| endif
 
 call plug#begin('~/.config/nvim/plugged')
-Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' }
-  Plug 'nvim-lua/plenary.nvim'
-Plug 'neovim/nvim-lspconfig'
-Plug 'echasnovski/mini.nvim'
-Plug 'nvim-treesitter/nvim-treesitter'
-Plug 'tpope/vim-fugitive'
 Plug 'junegunn/goyo.vim'
-Plug 'preservim/nerdtree'
-Plug 'folke/trouble.nvim'
+Plug 'nvim-tree/nvim-tree.lua'
+Plug 'echasnovski/mini.nvim'
 Plug 'Exafunction/codeium.vim'
-"Completions
+Plug 'rose-pine/neovim'
+"LSPs and Tree Sitter stuff
+Plug 'neovim/nvim-lspconfig'
+Plug 'nvim-treesitter/nvim-treesitter'
 Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'hrsh7th/cmp-buffer'
 Plug 'hrsh7th/cmp-path'
@@ -109,35 +106,45 @@ Plug 'hrsh7th/nvim-cmp'
 call plug#end()
 ]])
 
+local lspconfig = require("lspconfig")
+
+require('mini.statusline').setup({ use_icons = false })
+require('mini.tabline').setup()
+
+-- disable codeium by default
+g.codeium_enabled = false
+kmap("n", '<leader>ai', ':CodeiumToggle<cr>')
 g.codeium_filetypes = {
 	markdown = false,
 	text = false
 }
-kmap("n", '<leader>ai', ':CodeiumToggle<cr>')
 
-local lspconfig = require("lspconfig")
+-- status line with bufferline
+-- g.bufferline_echo = 0
+-- g.bufferline_active_buffer_left = '*'
+-- g.bufferline_active_buffer_right = ''
+-- vim.cmd [[autocmd VimEnter * let &statusline='%{bufferline#refresh_status()}'.bufferline#get_status_string() ]]
+-- vim.cmd [[autocmd VimEnter * let &tabline='%{bufferline#refresh_status()}'.bufferline#get_status_string() ]]
 
-require('mini.statusline').setup({
-	use_icons = false,
+-- strip trailing spaces
+vim.api.nvim_create_autocmd({ "BufWritePre" }, {
+	pattern = { "*" },
+	callback = function()
+		local save_cursor = vim.fn.getpos(".")
+		pcall(function() vim.cmd [[%s/\s\+$//e]] end)
+		vim.fn.setpos(".", save_cursor)
+	end,
 })
-require('mini.tabline').setup({
-	show_icons = false,
-})
+vim.cmd [[ match ExtraWhitespace /\s\+$/ ]]
+vim.cmd [[ highlight ExtraWhiteSpace ctermbg=gray guibg=gray ]]
+
 -- transparent background
-vim.cmd("highlight Normal guibg=none")
-vim.cmd("highlight NonText guibg=none")
-vim.cmd("highlight Normal ctermbg=none")
-vim.cmd("highlight NonText ctermbg=none")
+--vim.cmd("highlight Normal guibg=none")
+--vim.cmd("highlight NonText guibg=none")
+--vim.cmd("highlight Normal ctermbg=none")
+--vim.cmd("highlight NonText ctermbg=none")
 
-local builtin = require("telescope.builtin")
-vim.keymap.set("n", "<leader>pf", builtin.find_files, {})
-vim.keymap.set("n", "<leader>pg", builtin.live_grep, {})
-vim.keymap.set("n", "<leader>f", builtin.find_files, {})
-vim.keymap.set("n", "<leader>b", builtin.buffers, {})
-vim.keymap.set("n", "<C-p>", builtin.git_files, {})
-vim.keymap.set("n", "<leader>ps", function()
-	builtin.grep_string({ search = vim.fn.input("grep > ") })
-end)
+require('nvim-tree').setup()
 
 require("nvim-treesitter.configs").setup({
 	-- A list of parser names, or "all"
@@ -153,17 +160,29 @@ require("nvim-treesitter.configs").setup({
 	},
 })
 
+-- force set filetypes
+local function set_filetype(pattern, filetype)
+	vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+		pattern = pattern,
+		command = "set filetype=" .. filetype,
+	})
+end
+set_filetype({ "Dockerfile" }, "dockerfile")
+set_filetype({ "DOCKERFILE" }, "dockerfile")
+set_filetype({ "CONTAINERFILE" }, "dockerfile")
+
 -- lsps
 require 'lspconfig'.gopls.setup {}
 require 'lspconfig'.rust_analyzer.setup {}
 require 'lspconfig'.lua_ls.setup {}
+require 'lspconfig'.terraform_lsp.setup {}
+--powershell lsp conflicts with powershell plugin
+require 'lspconfig'.powershell_es.setup {
+	bundle_path = '/Users/athiede/.local/share/pslsp',
+}
 
 -- format on save
 vim.cmd [[autocmd BufWritePre <buffer> lua vim.lsp.buf.format()]]
-
---require("lsp_lines").setup()
-require("trouble").setup()
-vim.keymap.set("n", "<leader>xx", ":Trouble diagnostics toggle<CR>")
 
 -----------------
 -- COMPLETIONS --
@@ -204,30 +223,8 @@ cmp.setup({
 		{ name = 'buffer' },
 	})
 })
+-- disable autoccompletion for writing
 filetypes = { 'txt', 'html', 'text', 'gemtext', 'markdown' }
 for _, type in ipairs(filetypes) do
 	cmp.setup.filetype(type, { enabled = false })
 end
-
--- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
---[[
-cmp.setup.cmdline({ '/', '?' }, {
-	mapping = cmp.mapping.preset.cmdline(),
-	sources = {
-		{ name = 'buffer' }
-	}
-})
-]] --
-
--- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
---[[
-cmp.setup.cmdline(':', {
-	mapping = cmp.mapping.preset.cmdline(),
-	sources = cmp.config.sources({
-		{ name = 'path' }
-	}, {
-		{ name = 'cmdline' }
-	}),
-	matching = { disallow_symbol_nonprefix_matching = false }
-})
-]] --
