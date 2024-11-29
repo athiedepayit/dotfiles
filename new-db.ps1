@@ -12,6 +12,23 @@ param (
 	[string]$dbpass
 )
 
+function Create-Subscriber
+{
+	param (
+		[Parameter(Mandatory)]
+		[string]$name
+	)
+	$name_pub="${name}_pub"
+	$query="
+use [$name]
+exec sp_addsubscription @publication = N'$name_pub', @subscriber = N'base-sql-development.d17cfdc1fe68.database.windows.net', @destination_db = N'$name', @subscription_type = N'Push', @sync_type = N'automatic', @article = N'all', @update_mode = N'read only', @subscriber_type = 0
+exec sp_addpushsubscription_agent @publication = N'$name_pub', @subscriber = N'base-sql-development.d17cfdc1fe68.database.windows.net', @subscriber_db = N'$name', @job_login = null, @job_password = null, @subscriber_security_mode = 0, @subscriber_login = N'$dbuser', @subscriber_password = N'$dbpass', @frequency_type = 64, @frequency_interval = 0, @frequency_relative_interval = 0, @frequency_recurrence_factor = 0, @frequency_subday = 0, @frequency_subday_interval = 0, @active_start_time_of_day = 0, @active_end_time_of_day = 235959, @active_start_date = 20241120, @active_end_date = 99991231, @enabled_for_syncmgr = N'False', @dts_package_location = N'Distributor'
+GO
+"
+	Invoke-Sqlcmd -ServerInstance "localhost" -Database master -EncryptConnection -Query "$query" -QueryTimeout 120 -ConnectionTimeout 120
+
+}
+
 function Check-DbExists
 {
 	param (
