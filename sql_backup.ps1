@@ -35,6 +35,28 @@ function CheckDatabaseExists
 	}
 }
 
+# dbo.Cache_MobileLookup is a memory-optimized table and can't be pulled over to standard-tier SQL Managed Instance
+function DropTableFromDatabase
+{
+	param (
+		$Database,
+		$Server
+	)
+	$dropDatabseQuery = "drop table dbo.Cache_MobileLookup"
+	Invoke-Sqlcmd -ServerInstance $Server -Database $Database -QueryTimeout 3600 -Query $dropDatabseQuery
+}
+
+# recreate dbo.Cache_MobileLookup
+function CreateTableNewDatabase
+{
+	param (
+		$Database,
+		$Server
+	)
+	$createDatabaseQuery = "SET ANSI_NULLS ON SET QUOTED_IDENTIFIER ON CREATE TABLE [dbo].[Cache_MobileLookup]([Type] [char](4) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL, [AddedDate] [datetime] NOT NULL, [ExpiresDate] [datetime] NOT NULL, [Data] [varchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL, INDEX [IX_Cache_MobileLookup] NONCLUSTERED ([Type]))"
+	Invoke-Sqlcmd -ServerInstance $Server -Database $Database -QueryTimeout 3600 -Query $createDatabaseQuery
+}
+
 function BackupDatabases
 {
 	param (
@@ -56,6 +78,7 @@ foreach ($Database in $Databases.split(","))
 {
 	if (CheckDatabaseExists -Database $Database -Server $Server)
 	{
+		DropTableFromDatabase -Database $Database -Server $Server
 		BackupDatabases -Database $Database -StorageAccount $StorageAccount -StorageBlob $BlobContainer -Server $Server
 	}
 }
