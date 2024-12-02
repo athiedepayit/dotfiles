@@ -94,8 +94,8 @@ function RestoreDatabase
 	)
 	$restoreDatabaseQuery="USE [master] RESTORE DATABASE [$Database] FROM  URL = N'$BackupFileUrl'"
 	$ConnectionString="Server=tcp:$Server,1433;Persist Security Info=False;User ID=$Username;Password=$Password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
-	Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '$Database') begin create database [$Database] end"
-	Invoke-Sqlcmd -ConnectionString $ConnectionString -Query $restoreDatabaseQuery
+	Invoke-Sqlcmd -ConnectionString $ConnectionString -QueryTimeout 120 -Query "IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '$Database') begin create database [$Database] end"
+	Invoke-Sqlcmd -ConnectionString $ConnectionString -QueryTimeout 3600 -Query $restoreDatabaseQuery
 	Start-Sleep -Seconds 10
 }
 
