@@ -6,7 +6,12 @@ param (
 	[Parameter(Mandatory=$true)]
 	$StorageAccount,
 	[Parameter(Mandatory=$true)]
-	$BlobContainer
+	$BlobContainer,
+	[Parameter(Mandatory=$true)]
+	$User,
+	[Parameter(Mandatory=$true)]
+	[System.Management.Automation.PSCredential]
+	$Pass
 )
 
 function CheckDatabaseExists
@@ -42,8 +47,8 @@ function DropTableFromDatabase
 		$Database,
 		$Server
 	)
-	$dropDatabseQuery = "drop table dbo.Cache_MobileLookup"
-	Invoke-Sqlcmd -ServerInstance $Server -Database $Database -QueryTimeout 3600 -Query $dropDatabseQuery
+	$dropTableQuery = "drop table dbo.Cache_MobileLookup"
+	Invoke-Sqlcmd -ServerInstance $Server -Database $Database -QueryTimeout 3600 -Query $dropTableQuery
 }
 
 # recreate dbo.Cache_MobileLookup
@@ -51,10 +56,13 @@ function CreateTableNewDatabase
 {
 	param (
 		$Database,
-		$Server
+		$Server,
+		$Username,
+		$Password
 	)
+	$ConnectionString="Server=tcp:$Server,1433;Initial Catalog=$Database;Persist Security Info=False;User ID=$Username;Password=$Password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
 	$createDatabaseQuery = "SET ANSI_NULLS ON SET QUOTED_IDENTIFIER ON CREATE TABLE [dbo].[Cache_MobileLookup]([Type] [char](4) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL, [AddedDate] [datetime] NOT NULL, [ExpiresDate] [datetime] NOT NULL, [Data] [varchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL, INDEX [IX_Cache_MobileLookup] NONCLUSTERED ([Type]))"
-	Invoke-Sqlcmd -ServerInstance $Server -Database $Database -QueryTimeout 3600 -Query $createDatabaseQuery
+	Invoke-Sqlcmd -ConnectionString $ConnectionString -Query $createDatabaseQuery
 }
 
 function BackupDatabases
@@ -68,18 +76,48 @@ function BackupDatabases
 
 	$BackupFileName="$(get-date -Format '%y%M%d-%H%m')-$Database.bak"
 	write-host "backing up database $Database to $BackupFileName"
+	$BackupUrl="https://$StorageAccount.blob.core.windows.net/$StorageBlob/$BackupFileName"
 
-	$blobBackupQuery = "USE [master] BACKUP DATABASE [$Database] TO  URL = N'https://$StorageAccount.blob.core.windows.net/$StorageBlob/$BackupFileName' WITH  COPY_ONLY"
+	$blobBackupQuery = "USE [master] BACKUP DATABASE [$Database] TO  URL = N'$BackupUrl' WITH  COPY_ONLY"
 
 	Invoke-Sqlcmd -ServerInstance $Server -QueryTimeout 3600 -Query $blobBackupQuery
+	return $BackupUrl
 }
 
+function RestoreDatabase
+{
+	param (
+		$Database,
+		$Server,
+		$BackupFileUrl,
+		$Username,
+		$Password
+	)
+	$restoreDatabaseQuery="USE [master] RESTORE DATABASE [$Database] FROM  URL = N'$BackupFileUrl'"
+	$ConnectionString="Server=tcp:$Server,1433;Persist Security Info=False;User ID=$Username;Password=$Password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
+	Invoke-Sqlcmd -ConnectionString $ConnectionString -Query $restoreDatabaseQuery
+
+}
+
+<#
+- split the databases input on commas, and loop through that
+- for each of those databases, check if it exists on localhost (the SQL server we're running this on)
+- Drop the dbo.Cache_MobileLookup table from the source database
+- Back up the database to a storage blob
+- Restore the database to the new instace from a storage blob
+#>
 foreach ($Database in $Databases.split(","))
 {
-	if (CheckDatabaseExists -Database $Database -Server $Server)
+	if (CheckDatabaseExists -Database $Database -Server localhost)
 	{
-		DropTableFromDatabase -Database $Database -Server $Server
-		BackupDatabases -Database $Database -StorageAccount $StorageAccount -StorageBlob $BlobContainer -Server $Server
+		DropTableFromDatabase -Database $Database -Server localhost
+		$BackupUrl = BackupDatabases -Database $Database -StorageAccount $StorageAccount -StorageBlob $BlobContainer -Server localhost
+		$BackupUrl = 'https://s3sql.blob.core.windows.net/backupcontainer/24122-1544-mo-qa2.bak'
+		write-host "Restoring from $BackupUrl"
+		Invoke-Sqlcmd -ServerInstance $Server -Database master -Query "IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '$Database') begin create database [$Database] end"
+		RestoreDatabase -Server $Server -Database $Database -BackupFileUrl $BackupUrl -Username $User -Password $Pass
+		CreateTableNewDatabase -Database $Database -Server $Server -Username $User -Password $Pass
 	}
 }
+
 
