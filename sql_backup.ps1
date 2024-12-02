@@ -10,7 +10,6 @@ param (
 	[Parameter(Mandatory=$true)]
 	$User,
 	[Parameter(Mandatory=$true)]
-	[System.Management.Automation.PSCredential]
 	$Pass
 )
 
@@ -95,8 +94,9 @@ function RestoreDatabase
 	)
 	$restoreDatabaseQuery="USE [master] RESTORE DATABASE [$Database] FROM  URL = N'$BackupFileUrl'"
 	$ConnectionString="Server=tcp:$Server,1433;Persist Security Info=False;User ID=$Username;Password=$Password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
+	Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '$Database') begin create database [$Database] end"
 	Invoke-Sqlcmd -ConnectionString $ConnectionString -Query $restoreDatabaseQuery
-
+	Start-Sleep -Seconds 10
 }
 
 <#
@@ -114,10 +114,10 @@ foreach ($Database in $Databases.split(","))
 		$BackupUrl = BackupDatabases -Database $Database -StorageAccount $StorageAccount -StorageBlob $BlobContainer -Server localhost
 		$BackupUrl = 'https://s3sql.blob.core.windows.net/backupcontainer/24122-1544-mo-qa2.bak'
 		write-host "Restoring from $BackupUrl"
-		Invoke-Sqlcmd -ServerInstance $Server -Database master -Query "IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '$Database') begin create database [$Database] end"
 		RestoreDatabase -Server $Server -Database $Database -BackupFileUrl $BackupUrl -Username $User -Password $Pass
 		CreateTableNewDatabase -Database $Database -Server $Server -Username $User -Password $Pass
 	}
 }
+
 
 
