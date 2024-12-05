@@ -13,6 +13,9 @@ param (
 	$Pass
 )
 
+$ErrorActionPreference="stop"
+
+
 function CheckDatabaseExists
 {
 	param (
@@ -48,6 +51,10 @@ function DropTableFromDatabase
 	)
 	$dropTableQuery = "drop table dbo.Cache_MobileLookup"
 	Invoke-Sqlcmd -ServerInstance $Server -Database $Database -QueryTimeout 3600 -Query $dropTableQuery
+}
+
+function RecreateTableOldDatabase
+{
 }
 
 # recreate dbo.Cache_MobileLookup
@@ -92,11 +99,15 @@ function RestoreDatabase
 		$Username,
 		$Password
 	)
-	$restoreDatabaseQuery="USE [master] RESTORE DATABASE [$Database] FROM  URL = N'$BackupFileUrl'"
+	$restoreDatabaseQuery="USE [master] RESTORE DATABASE [$Database] FROM URL = N'$BackupFileUrl'"
 	$ConnectionString="Server=tcp:$Server,1433;Persist Security Info=False;User ID=$Username;Password=$Password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
-	Invoke-Sqlcmd -ConnectionString $ConnectionString -QueryTimeout 120 -Query "IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '$Database') begin create database [$Database] end"
+	$encryptDatabaseQuery="alter database [$Database] set encryption on"
+
+	Write-Host "Restoring DB"
 	Invoke-Sqlcmd -ConnectionString $ConnectionString -QueryTimeout 3600 -Query $restoreDatabaseQuery
-	Start-Sleep -Seconds 10
+	Start-Sleep -Seconds 30
+	Write-Host "Encrypting Database"
+	Invoke-Sqlcmd -ConnectionString $ConnectionString -QueryTimeout 3600 -Query $encryptDatabaseQuery
 }
 
 <#
@@ -105,14 +116,15 @@ function RestoreDatabase
 - Drop the dbo.Cache_MobileLookup table from the source database
 - Back up the database to a storage blob
 - Restore the database to the new instace from a storage blob
+- Encrypt the database
 #>
 foreach ($Database in $Databases.split(","))
 {
 	if (CheckDatabaseExists -Database $Database -Server localhost)
 	{
-		DropTableFromDatabase -Database $Database -Server localhost
-		$BackupUrl = BackupDatabases -Database $Database -StorageAccount $StorageAccount -StorageBlob $BlobContainer -Server localhost
-		$BackupUrl = 'https://s3sql.blob.core.windows.net/backupcontainer/24122-1544-mo-qa2.bak'
+		#DropTableFromDatabase -Database $Database -Server localhost
+		#$BackupUrl = BackupDatabases -Database $Database -StorageAccount $StorageAccount -StorageBlob $BlobContainer -Server localhost
+		$BackupUrl = 'https://s3sql.blob.core.windows.net/backupcontainer/24123-165-mo-qa2.bak'
 		write-host "Restoring from $BackupUrl"
 		RestoreDatabase -Server $Server -Database $Database -BackupFileUrl $BackupUrl -Username $User -Password $Pass
 		CreateTableNewDatabase -Database $Database -Server $Server -Username $User -Password $Pass
