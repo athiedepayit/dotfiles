@@ -84,9 +84,6 @@
     "git.autofetch": true,
     "git.confirmSync": false,
     "extensions.autoUpdate": false,
-    "update.mode": "none",
-    "extensions.autoCheckUpdates": false,
-    "update.showReleaseNotes": false,
     "editor.minimap.enabled": false,
     "terminal.integrated.fontSize": 13,
     "workbench.activityBar.location": "top"

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+podman pull payitadmin/devcontainer
 podman container inspect devcontainer > /dev/null
 ec=$?
 if [[ $ec -gt 0 ]];then

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 brew_u() {
+    command -v brew > /dev/null
+    if [[ ! $? -eq 0 ]];then
+	return
+    fi
     echo "Fetching brew updates..."
     brew_updates=$(brew outdated)
     if [[ "$brew_updates" == "" ]];then
@@ -16,6 +20,10 @@ brew_u() {
 }
 
 mas_u() {
+    command -v mas > /dev/null
+    if [[ ! $? -eq 0 ]];then
+	return
+    fi
     echo "Fetching app store updates..."
     mas_updates=$(mas outdated)
     if [[ "$mas_updates" == "" ]];then
@@ -31,6 +39,10 @@ mas_u() {
 }
 
 system_u(){
+    command -v softwareupdate > /dev/null
+    if [[ ! $? -eq 0 ]];then
+	return
+    fi
     echo "Fetching system software updates..."
     software_updates=$(softwareupdate -l | grep 'Label:')
     if [[ "$software_updates" == "" ]];then
@@ -45,10 +57,21 @@ system_u(){
     echo "---"
 }
 
+apt_u(){
+    command -v apt > /dev/null
+    if [[ ! $? -eq 0 ]];then
+	return
+    fi
+    echo "apt updates..."
+    sudo apt-get update && sudo apt-get upgrade
+    echo "---"
+}
+
 all() {
     brew_u
     mas_u
     system_u
+    apt_u
 }
 
 case $1 in
@@ -58,6 +81,8 @@ case $1 in
 	mas_u;;
     system)
 	system_u;;
+    apt)
+	apt_u;;
     *)
 	all;;
 esac
