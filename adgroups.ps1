@@ -10,8 +10,8 @@ $SecurityGroupOU="AADDC Users"
 $EntraGroupOU="AADDC Users"
 $DC="DC=s3gov,DC=com"
 
-$SecurityGroups=Get-ADGroup -Filter 'GroupCategory -eq "Security"' -SearchBase "OU=$SecurityGroupOU,$DC"|select -ExpandProperty Name
-$EntraGroups=Get-ADGroup -Filter 'GroupCategory -eq "Security"' -SearchBase "OU=$EntraGroupOU,$DC"|select -ExpandProperty Name
+$SecurityGroups=Get-ADGroup -Filter 'GroupCategory -eq "Security"' -SearchBase "OU=$SecurityGroupOU,$DC"|select-object -ExpandProperty Name
+$EntraGroups=Get-ADGroup -Filter 'GroupCategory -eq "Security"' -SearchBase "OU=$EntraGroupOU,$DC"|select-object -ExpandProperty Name
 
 function Sync-Groups
 {
@@ -25,6 +25,7 @@ function Sync-Groups
 	foreach ($SrcUser in $SourceUsers)
 	{
 		$SrcUserName=$SrcUser.Name
+		$SrcUserAccount=$SrcUser.SamAccountName
 		if ($DestUsers -contains $SrcUser)
 		{
 			Write-Host " - $SrcUserName alread in $DestinationGroup"
@@ -32,15 +33,21 @@ function Sync-Groups
 		{
 
 			Write-Host " - Adding $SrcUserName to $DestinationGroup"
+			# TODO: Remove -whatif
+			Add-ADGroupMember -Identity $DestinationGroup -Members $SrcUserAccount -Whatif
+
 		}
 	}
 	# no need to re-evaluate destusers, just need to remove ones that aren't in sourceusers
 	foreach ($DestUser in $DestUsers)
 	{
 		$DestUserName=$DestUser.Name
+		$DestUserAccount=$DestUser.SamAccountName
 		if ($SourceUsers -notcontains $DestUser)
 		{
 			Write-Host " - Removing $DestUserName from $DestinationGroup"
+			# TODO: Remove -whatif
+			Remove-ADGroupMember -Identity $DestinationGroup -Members $DestUserAccount -Whatif
 		}
 	}
 	Write-Host "---"
@@ -55,8 +62,7 @@ function Read-MapFile
 
 	$GroupMaps=@{}
 
-	$FileExists=Test-Path $Path -PathType Leaf
-	if (!$FileExists)
+	if (!Test-Path $Path -PathType Leaf)
 	{
 		Write-Host "File not found: $Path"
 		return $GroupMaps
@@ -78,7 +84,7 @@ function Read-MapFile
 	return $GroupMaps
 }
 
-function Map-Groups
+function Update-Groups
 {
 	param (
 		[Hashtable]$GroupMap
@@ -112,12 +118,10 @@ function Map-Groups
 if ($null -eq $MappingFile -or $MappingFile -eq "")
 {
 	write-host "Group mapping file not supplied."
-	Map-Groups
+	Update-Groups
 } else
 {
 	Write-Host "Group mapping file supplied: $MappingFile"
 	$GroupMap=Read-MapFile -Path $MappingFile
-	Map-Groups -GroupMap $GroupMap
+	Update-Groups -GroupMap $GroupMap
 }
-
-
