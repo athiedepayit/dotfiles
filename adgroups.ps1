@@ -6,7 +6,7 @@ param(
 	[string]$MappingFile
 )
 
-$SecurityGroupOU="AADDC Users"
+$SecurityGroupOU="S3_Security_Groups"
 $EntraGroupOU="AADDC Users"
 $DC="DC=s3gov,DC=com"
 
@@ -22,34 +22,37 @@ function Sync-Groups
 	write-host "Synchronizing members of $SourceGroup and $DestinationGroup"
 	$SourceUsers = Get-ADGroupMember -Identity $SourceGroup
 	$DestUsers = Get-ADGroupMember -Identity $DestinationGroup
+
+	$SourceUserNames=$SourceUsers.Name
+	$DestUserNames=$DestUsers.Name
+
 	foreach ($SrcUser in $SourceUsers)
 	{
 		$SrcUserName=$SrcUser.Name
 		$SrcUserAccount=$SrcUser.SamAccountName
-		if ($DestUsers -contains $SrcUser)
+		if ($DestUserNames -contains $SrcUserName)
 		{
-			Write-Host " - $SrcUserName alread in $DestinationGroup"
+			Write-Host " - $SrcUserName already in $DestinationGroup"
 		} else
 		{
 
 			Write-Host " - Adding $SrcUserName to $DestinationGroup"
-			# TODO: Remove -whatif
-			Add-ADGroupMember -Identity $DestinationGroup -Members $SrcUserAccount -Whatif
+			Add-ADGroupMember -Identity $DestinationGroup -Members $SrcUserAccount -Confirm:$False
 
 		}
 	}
-	# no need to re-evaluate destusers, just need to remove ones that aren't in sourceusers
+
 	foreach ($DestUser in $DestUsers)
 	{
 		$DestUserName=$DestUser.Name
 		$DestUserAccount=$DestUser.SamAccountName
-		if ($SourceUsers -notcontains $DestUser)
+		if ($SourceUserNames -notcontains $DestUserName)
 		{
 			Write-Host " - Removing $DestUserName from $DestinationGroup"
-			# TODO: Remove -whatif
-			Remove-ADGroupMember -Identity $DestinationGroup -Members $DestUserAccount -Whatif
+			Remove-ADGroupMember -Identity $DestinationGroup -Members $DestUserAccount -Confirm:$False
 		}
 	}
+
 	Write-Host "---"
 }
 
@@ -59,10 +62,14 @@ function Read-MapFile
 		[Parameter(Mandatory=$true)]
 		[string]$Path
 	)
+	# Reads a mapping file of Cloud Group -> AD group
+	# File should be one mapping per line, colon-delimited
+	# example line:
+	# sqladmin:SQL admin
 
 	$GroupMaps=@{}
 
-	if (!Test-Path $Path -PathType Leaf)
+	if (!(Test-Path $Path -PathType Leaf))
 	{
 		Write-Host "File not found: $Path"
 		return $GroupMaps
@@ -125,3 +132,5 @@ if ($null -eq $MappingFile -or $MappingFile -eq "")
 	$GroupMap=Read-MapFile -Path $MappingFile
 	Update-Groups -GroupMap $GroupMap
 }
+
+
